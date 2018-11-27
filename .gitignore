@@ -3,4 +3,6 @@ __venv__/
 .pytest_cache
 config/auth.cfg
 
+config/
+
 .idea/
