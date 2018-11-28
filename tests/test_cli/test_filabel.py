@@ -1,4 +1,5 @@
 import pytest
+import betamax
 
 from filabel.logic import Report
 from filabel.logic import Change
@@ -16,11 +17,15 @@ def test_run_pr(filabel, github):
     assert len(labels) == 3 and labels[0][0] == 'a'
 
 
-def test_run_repo(filabel, github):
+def test_run_repo(filabel, github, betamax_session):
 
     reposlug = f'{OWNER}/{REPO}'
 
-    pr = github.pull_requests(OWNER, REPO)
+    with betamax_session as vcr:
+        vcr.use_cassette('tests/test_cli/fixtures/cassettes/tests.test_cli.test_github.test_all_pr.json')
+        pr = github.pull_requests(OWNER, REPO)
+
+    print(pr)
 
     for my_pr in pr:
         github.reset_labels(OWNER, REPO, my_pr['number'], [])

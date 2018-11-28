@@ -3,6 +3,7 @@ __venv__/
 config/
 .idea/
 
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
