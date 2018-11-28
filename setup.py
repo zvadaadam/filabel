@@ -4,16 +4,9 @@ with open('README.rst') as f:
     long_description = ''.join(f.readlines())
 
 
-
-packages = find_packages(exclude=[
-    'test',
-    'test_module',
-    'tests_enviroment'
-])
-
 setup(
     name='filabel_cvut',
-    version='0.3',
+    version='0.4',
     keywords='github labels management pull-requests globs',
     description='Simple CLI & WEB tool for labeling GitHub PRs using globs',
     long_description=long_description,
@@ -22,7 +15,7 @@ setup(
     license='MIT',
     url='https://github.com/cvut/filabel',
     zip_safe=False,
-    packages=packages,
+    packages=find_packages(),
     package_data={
         'filabel': [
             'static/*.css',
@@ -39,6 +32,13 @@ setup(
         'Flask',
         'jinja2',
         'requests',
+    ],
+    setup_requires=[
+        'pytest-runner'
+    ],
+    tests_require=[
+        'pytest',
+        'betamax'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',

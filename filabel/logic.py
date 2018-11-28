@@ -55,6 +55,7 @@ class GitHub:
         if base is not None:
             params['base'] = base
         url = f'{self.API}/repos/{owner}/{repo}/pulls'
+
         return self._paginated_json_get(url, params)
 
     def pr_files(self, owner, repo, number):
@@ -66,6 +67,9 @@ class GitHub:
         number: PR number/id
         """
         url = f'{self.API}/repos/{owner}/{repo}/pulls/{number}/files'
+
+        #print(url)
+
         return self._paginated_json_get(url)
 
     def pr_filenames(self, owner, repo, number):
@@ -115,8 +119,7 @@ class Filabel:
     """
     Main login of PR labeler
     """
-    def __init__(self, token, labels,
-                 state='open', base=None, delete_old=True):
+    def __init__(self, token, labels, state='open', base=None, delete_old=True, github=None):
         """
         token: GitHub token
         labels: Configuration of labels with globs
@@ -124,7 +127,11 @@ class Filabel:
         base: Base branch of PRs to be (re)labeled
         delete_old: If no longer matching labels should be deleted
         """
-        self.github = GitHub(token)
+        if github == None:
+            self.github = GitHub(token)
+        else:
+            self.github = github
+
         self.labels = labels
         self.state = state
         self.base = base
@@ -220,3 +227,21 @@ class Filabel:
             except Exception:
                 pass
         return report
+
+
+if __name__ == "__main__":
+
+    import os
+
+    token = os.environ.get('GH_TOKEN', '<TOKEN>')
+    print(token)
+
+    github = GitHub(token)
+
+    owner = 'zvadaadam'
+    repo = 'filabel-testrepo4'
+
+    pr = github.pull_requests(owner, repo)
+
+    print(pr)
+

@@ -90,11 +90,12 @@ webhook_processors = {
 }
 
 
-def create_app(*args, **kwargs):
+def create_app(github=None, *args, **kwargs):
     """
     Prepare Filabel Flask application listening to GitHub webhooks
     """
     app = flask.Flask(__name__)
+    app.test_client()
     cfg = configparser.ConfigParser()
     if 'FILABEL_CONFIG' not in os.environ:
         app.logger.critical('Config not supplied by envvar FILABEL_CONFIG')
@@ -115,7 +116,7 @@ def create_app(*args, **kwargs):
         app.logger.critical('Auth configuration not usable!', err=True)
         exit(1)
 
-    filabel = Filabel(app.config['github_token'], app.config['labels'])
+    filabel = Filabel(app.config['github_token'], app.config['labels'], github=github)
 
     try:
         app.config['github_user'] = filabel.github.user()
