@@ -16,6 +16,8 @@ ABS_PATH = os.path.abspath(os.path.dirname(__file__))
 CASSETTES_PATH = ABS_PATH + '/fixtures/cassettes'
 CONFIGS_PATH = ABS_PATH + '/fixtures/configs'
 
+USER_DEFAULT = 'zvadaadam'
+
 
 with betamax.Betamax.configure() as config:
 
@@ -24,6 +26,9 @@ with betamax.Betamax.configure() as config:
     config.default_cassette_options['match_requests_on'] = [
         'method',
         'uri',
+        'body',
+        'headers',
+        'path',
     ]
 
     token = os.environ.get('GH_TOKEN', '<TOKEN>')
@@ -48,19 +53,45 @@ def github(betamax_session):
 
 
 @pytest.fixture
-def filabel(betamax_session):
+def filabel(betamax_session, request):
+
+    default_config = '/labels.abc.cfg'
+    token = os.environ.get('GH_TOKEN', '<TOKEN>')
+
+    github = GitHub(token, betamax_session)
+
+    config_paser = configparser.ConfigParser()
+    config_paser.read(CONFIGS_PATH + default_config)
+    labels = parse_labels(config_paser)
+
+    filabel = Filabel(token=token, labels=labels, state='open', base=None, delete_old=True, github=github)
+
+    return filabel
+
+@pytest.fixture(params=('/labels.abc.cfg', '/labels.example.cfg'))
+def filabel_param(betamax_session, request):
 
     token = os.environ.get('GH_TOKEN', '<TOKEN>')
 
     github = GitHub(token, betamax_session)
 
     config_paser = configparser.ConfigParser()
-    config_paser.read(CONFIGS_PATH + '/labels.abc.cfg')
+    config_paser.read(CONFIGS_PATH + request.param)
     labels = parse_labels(config_paser)
 
     filabel = Filabel(token=token, labels=labels, state='open', base=None, delete_old=True, github=github)
 
     return filabel
+
+@pytest.fixture
+def username(betamax_session):
+
+    user = os.environ.get('GH_USER')
+
+    if user is None:
+        user = USER_DEFAULT
+
+    return user
 
 
 # @pytest.fixture

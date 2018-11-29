@@ -1,6 +1,10 @@
 filabel
 =======
 
+.. image:: https://travis-ci.com/zvadaadam/filabel-tests.svg?token=hQ9pHGbqJt1vNKYxDgN7&branch=master
+:target: https://travis-ci.com/zvadaadam/filabel-tests
+
+
 |license| |pypi|
 
 Tool for labeling PRs at GitHub by globs

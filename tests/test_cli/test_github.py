@@ -3,57 +3,62 @@ import pytest
 from filabel.logic import GitHub
 
 OWNER = 'zvadaadam'
-REPO = 'filabel-testrepo4'
-
-def test_all_pr(github):
-
-    pr = github.pull_requests(OWNER, REPO)
-
-    assert len(pr) == 2
+REPO = 'filabel-testrepo2'
 
 
-def test_invalid_repo(github):
+@pytest.mark.parametrize(
+    ['repo', 'pr_length'],
+    [('filabel-testrepo1', 0),
+     ('filabel-testrepo2', 53),
+     ('filabel-testrepo4', 2)],
+)
+def test_all_pr(username, repo, pr_length, github):
 
-    invalid_repo = 'WTF_REPO'
+    pr = github.pull_requests(username, repo)
+
+    if pr == []:
+        my_pr_len = 0
+    else:
+        my_pr_len = len(pr)
+
+    assert my_pr_len == pr_length
+
+
+def test_invalid_repo(username, github):
+
+    invalid_repo = 'WTF_REPO_42_FOO'
 
     with pytest.raises(requests.exceptions.HTTPError) as err:
         pr = github.pull_requests(OWNER, invalid_repo)
 
     assert err
 
-def test_empty_pr(github):
 
-    my_repo = 'speech-recognition'
-
-    pr = github.pull_requests(OWNER, my_repo)
-
-    assert len(pr) == 0
-
-
-def test_user(github):
+def test_user(username, github):
 
     user = github.user()
 
-    assert user is not None
+    assert username == user['login']
 
 
-def test_pr_file(github):
+def test_pr_file(username, github):
 
-    pr_file = github.pr_filenames(OWNER, REPO, 1)
+    pr_file = github.pr_filenames(username, REPO, 1)
 
     print(pr_file)
 
-    assert 'aaaa' in pr_file
+    assert 'radioactive' in pr_file
 
 
-def test_reset_labels(github):
+def test_reset_labels(username, github):
 
     labels = ['CRAZY', 'MI-PYT']
 
-    labels = github.reset_labels(OWNER, REPO, 2, labels)
+    labels = github.reset_labels(username, REPO, 2, labels)
 
     print(labels)
 
+    assert 'CRAZY' == labels[0]['name']
     assert 'MI-PYT' == labels[1]['name']
 
 
