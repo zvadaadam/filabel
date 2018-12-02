@@ -17,6 +17,10 @@ Example::
 
 WARNING: Be sure you keep your token private!
 
+Export also the token to environment variable.
+Example::
+    $ export GH_TOKEN=<GITHUB_TOKEN>
+
 
 .. _label-conf-ref:
 
@@ -58,5 +62,5 @@ Example::
 The ``auth.cfg`` and ``label.cfg`` has to be stored in ``FILABEL_CONFIG`` enviroment variable for filabel to properly function.
 Example::
 
-    export FILABEL_CONFIG = "/path/to/auth.cfg:/path/to/label.cfg"
+    $ export FILABEL_CONFIG = "/path/to/auth.cfg:/path/to/label.cfg"
 

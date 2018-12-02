@@ -1,7 +1,7 @@
 Installation
 ============
 
-You may install :py:mod:`filabel` using `pip <https://test.pypi.org/project/filabel-zvadaada/>`_ 
+You may install :py:mod:`filabel` using `pip <https://test.pypi.org/project/filabel-zvadaada/>`_
 
 .. code-block:: none
 

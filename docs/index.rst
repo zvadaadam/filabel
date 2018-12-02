@@ -20,7 +20,7 @@ Contents
    :maxdepth: 2
    :caption: Contents:
 
-   filabel_doc/usage/usage
+   filabel_doc/usage/index
    filabel_doc/module/module
 
 
