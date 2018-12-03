@@ -15,10 +15,10 @@ def webhook_verify_signature(payload, signature, secret, encoding='utf-8'):
 
     see https://developer.github.com/webhooks/securing/
 
-    payload: received data as dict
-    signature: included SHA1 signature of payload (with secret)
-    secret: secret to verify signature
-    encoding: encoding for secret (optional)
+    :param dict payload: received data as dict
+    :param str signature: included SHA1 signature of payload (with secret)
+    :param str secret: secret to verify signature
+    :param str encoding: encoding for secret (optional)
     """
     h = hmac.new(secret.encode(encoding), payload, hashlib.sha1)
     return hmac.compare_digest('sha1=' + h.hexdigest(), signature)
@@ -28,7 +28,7 @@ def process_webhook_pr(payload):
     """
     Process webhook event "pull_request"
 
-    payload: event payload
+    :param dict payload: event payload
     """
     filabel = flask.current_app.config['filabel']
     try:
@@ -68,7 +68,7 @@ def process_webhook_ping(payload):
     """
     Process webhook event "ping"
 
-    payload: event payload
+    :param dict payload: event payload
     """
     try:
         repo = payload['repository']['full_name']
@@ -93,6 +93,8 @@ webhook_processors = {
 def create_app(github=None, *args, **kwargs):
     """
     Prepare Filabel Flask application listening to GitHub webhooks
+
+    :param Optinal[Github] github: github api wrapper
     """
     app = flask.Flask(__name__)
     app.test_client()
@@ -130,7 +132,7 @@ def create_app(github=None, *args, **kwargs):
         """
         Template filter for HTML link to GitHub profile
 
-        github_user: User data from GitHub API
+        :param dict github_user: User data from GitHub API
         """
         url = flask.escape(github_user['html_url'])
         login = flask.escape(github_user['login'])
