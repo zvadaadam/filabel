@@ -8,6 +8,7 @@ import configparser
 from filabel.logic import GitHub
 from filabel.logic import Filabel
 from filabel.web import create_app
+from click.testing import CliRunner
 
 from filabel.utils import parse_labels
 
@@ -45,7 +46,7 @@ with betamax.Betamax.configure() as config:
 @pytest.fixture
 def github(betamax_session):
 
-    token = os.environ.get('GH_TOKEN', '<TOKEN>')
+    #token = os.environ.get('GH_TOKEN', '<TOKEN>')
 
     github = GitHub(token, betamax_session)
 
@@ -93,14 +94,19 @@ def username(betamax_session):
 
     return user
 
+@pytest.fixture
+def runner(betamax_session):
+    return CliRunner()
 
-# @pytest.fixture
-# def test_app(betamax_session, github):
-#
-#     os.environ["FILABEL_CONFIG"] = CONFIGS_PATH + "/labels.abc.cfg"
-#
-#     test_app = create_app(github=github)
-#
-#
-#     return test_app
+
+@pytest.fixture
+def test_app(betamax_session, github):
+
+    os.environ["FILABEL_CONFIG"] = CONFIGS_PATH + "/labels.abc.cfg" + ':' + CONFIGS_PATH + '/auth.fff.cfg'
+
+    test_app = create_app(github=github)
+
+    test_app.config['TESTING'] = True
+
+    return test_app.test_client()
 

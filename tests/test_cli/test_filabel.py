@@ -24,11 +24,15 @@ def test_run_repo(username, filabel, github, betamax_session):
 
     report = filabel.run_repo(reposlug)
 
+    # 'https://github.com/zvadaadam/filabel-testrepo4/pull/2'
+    URL_2 = 'https://github.com/' + username + '/' + REPO + '/pull/' + '2'
+    URL_3 = 'https://github.com/' + username + '/' + REPO + '/pull/' + '3'
+
     assert report.ok == True
     assert report.repo == reposlug
-    assert report.prs['https://github.com/zvadaadam/filabel-testrepo4/pull/3'][0][0] == 'ab'
-    assert report.prs['https://github.com/zvadaadam/filabel-testrepo4/pull/3'][1][1] == Change.ADD
-    assert report.prs['https://github.com/zvadaadam/filabel-testrepo4/pull/2'][2][1] == Change.ADD
+    assert report.prs[URL_3][0][0] == 'ab'
+    assert report.prs[URL_3][1][1] == Change.ADD
+    assert report.prs[URL_2][2][1] == Change.ADD
 
 
 def test_matching_labels(username, filabel_param, github):

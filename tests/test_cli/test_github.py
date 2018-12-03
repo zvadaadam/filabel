@@ -2,7 +2,8 @@ import requests
 import pytest
 from filabel.logic import GitHub
 
-OWNER = 'zvadaadam'
+
+
 REPO = 'filabel-testrepo2'
 
 
@@ -29,7 +30,7 @@ def test_invalid_repo(username, github):
     invalid_repo = 'WTF_REPO_42_FOO'
 
     with pytest.raises(requests.exceptions.HTTPError) as err:
-        pr = github.pull_requests(OWNER, invalid_repo)
+        pr = github.pull_requests(username, invalid_repo)
 
     assert err
 
@@ -53,13 +54,19 @@ def test_pr_file(username, github):
 def test_reset_labels(username, github):
 
     labels = ['CRAZY', 'MI-PYT']
+    pr_index = 2
 
-    labels = github.reset_labels(username, REPO, 2, labels)
+    prs = github.pull_requests(username, REPO)
 
-    print(labels)
+    pr_labels = prs[pr_index]['labels']
+    prev_labels = list(map(lambda x: x, pr_labels))
+
+    labels = github.reset_labels(username, REPO, pr_index, labels)
 
     assert 'CRAZY' == labels[0]['name']
     assert 'MI-PYT' == labels[1]['name']
+
+    github.reset_labels(username, REPO, pr_index, prev_labels)
 
 
 

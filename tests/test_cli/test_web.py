@@ -38,7 +38,7 @@ def test_process_webhook_ping(github):
 
     test_app = create_app(github=github)
 
-    payload = '{ "repository":{ "full_name":"name" }, "hook_id": "123" }'
+    payload = '{"repository" : {"full_name" : "name" }, "hook_id" : "42"}'
 
     j = json.loads(payload)
 
@@ -48,17 +48,9 @@ def test_process_webhook_ping(github):
     assert res == 'PONG'
     assert code == 200
 
-def test_app(github, betamax_session):
 
-    os.environ["FILABEL_CONFIG"] = CONFIGS_PATH + "/labels.abc.cfg" + ':' + CONFIGS_PATH + '/auth.fff.cfg'
+def test_app(test_app ,github, betamax_session):
 
-    test_app = create_app(github=github)
+    response = test_app.get('/')
 
-    #test_app.inject_session(betamax_session)
-    #test_app.reload_config()
-
-    client = test_app.test_client()
-
-    response = client.get('/')
-
-    assert response.status_code == 200
+    assert response.status == '200 OK'
