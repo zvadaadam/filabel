@@ -6,15 +6,20 @@ import requests
 
 class GitHub:
     """
-    This class can communicate with the GitHub API
-    just give it a token and go.
+    GitHub API Wrapper, class for communication with the GitHub API with implementaed methods for purposes for Filabel,
+    mainly focused on retriving and editing labels of pull requests etc..
+
+    User needs to be authenticated with GitHub token, which is send in the request's header.
     """
     API = 'https://api.github.com'
 
     def __init__(self, token, session=None):
         """
-        token: GitHub token
-        session: optional requests session
+        Initilizer for GitHub API wrapper.
+
+        :param str token: GitHub token
+
+        :param Optinal[session] session: optional requests session
         """
         self.token = token
         self.session = session or requests.Session()
@@ -23,12 +28,30 @@ class GitHub:
 
     def _token_auth(self, req):
         """
-        This alters all our outgoing requests
+        This alters all our outgoing requests by setting up the Github authentication token in the header request.
+
+        :param req: outgoing requests
+
+        :return: updated requests with GitHub token
         """
         req.headers['Authorization'] = 'token ' + self.token
         return req
 
     def _paginated_json_get(self, url, params=None):
+        """"
+        If the request response can be paginated, it retrives the whole response.
+
+        :raise HTTPError: if during the request is raised
+
+        :param url: url for outgoing request
+
+        :param Optinal[dict[str, str] params: parameters for request
+
+        :rtype dict: json
+
+        :return: whole already paginated json reponse for given url and params
+        """
+
         r = self.session.get(url, params=params)
         r.raise_for_status()
         json = r.json()
@@ -38,18 +61,31 @@ class GitHub:
 
     def user(self):
         """
-        Get current user authenticated by token
+        Get current Github user authenticated by given token
+
+        :rtype dict: json
+
+        :return: current user information
         """
         return self._paginated_json_get(f'{self.API}/user')
 
     def pull_requests(self, owner, repo, state='open', base=None):
         """
-        Get all Pull Requests of a repo
+        Get all Pull Requests of a defined repositary.
 
-        owner: GtiHub user or org
-        repo: repo name
-        state: open, closed, all
-        base: optional branch the PRs are open for
+        :param str owner: GtiHub user or org
+
+        :param str repo: repo name
+
+        :param str state: defines the state for retrived PR
+                          Default: open
+                          Set of values: ["open", "closed", "all"]
+
+        :param str base: optional branch the PRs are open for
+
+        :rtype dict: json
+
+        :return: all pull request for given defined repo
         """
         params = {'state': state}
         if base is not None:
@@ -60,11 +96,17 @@ class GitHub:
 
     def pr_files(self, owner, repo, number):
         """
-        Get files of one Pull Request
+        Get files request for one defined Pull Request by ID
 
-        owner: GtiHub user or org
-        repo: repo name
-        number: PR number/id
+        :param str owner: Github username
+
+        :param str repo: name of the repository
+
+        :param int number: ID of the PR
+
+        :rtype dict: json
+
+        :return: changed filenames for one given PR
         """
         url = f'{self.API}/repos/{owner}/{repo}/pulls/{number}/files'
 
@@ -74,21 +116,35 @@ class GitHub:
 
     def pr_filenames(self, owner, repo, number):
         """
-        Get filenames of one Pull Request. A generator.
+        Get just the filename for one Pull Request, a generator.
 
-        owner: GtiHub user or org
-        repo: repo name
-        number: PR number/id
+        :param str owner: Github username
+
+        :param str repo: name of the repository
+
+        :param int number: ID of the PR
+
+        :rtype dict: json
+
+        :return: changed filenames for one given PR
         """
         return (f['filename'] for f in self.pr_files(owner, repo, number))
 
     def reset_labels(self, owner, repo, number, labels):
         """
-        Set's labels for Pull Request. Replaces all existing lables.
+        Set's labels for Pull Request by replacing all the existing lables.
 
-        owner: GtiHub user or org
-        repo: repo name
-        lables: all lables this PR will have
+        :param str owner: Github username
+
+        :param str repo: name of the repository
+
+        :param int number: ID of the PR
+
+        :param list[str] lables: all lables this PR will have
+
+        :rtype dict: json
+
+        :return: new labels for the pull request
         """
         url = f'{self.API}/repos/{owner}/{repo}/issues/{number}'
         r = self.session.patch(url, json={'labels': labels})
@@ -99,6 +155,7 @@ class GitHub:
 class Change(enum.Enum):
     """
     Enumeration of possible label changes
+    Set of values: [ADD=1, DELETE=2, NONE=3]
     """
     ADD = 1
     DELETE = 2
@@ -110,6 +167,11 @@ class Report:
     Simple container for reporting repo-pr label changes
     """
     def __init__(self, repo):
+        """
+        Initilizer for Report class.
+
+        :param str repo: name of repository
+        """
         self.repo = repo
         self.ok = True
         self.prs = {}
@@ -117,15 +179,25 @@ class Report:
 
 class Filabel:
     """
-    Main login of PR labeler
+    Filabel tool labeling defined pull requests.
+
+    We provide a configuration which files should be labeled and Filabel tool do the rest.
     """
     def __init__(self, token, labels, state='open', base=None, delete_old=True, github=None):
         """
-        token: GitHub token
-        labels: Configuration of labels with globs
-        state: State of PR to be (re)labeled
-        base: Base branch of PRs to be (re)labeled
-        delete_old: If no longer matching labels should be deleted
+        Initilizer for Filabel class.
+
+        :param str token: GitHub token
+
+        :param list[str] labels: Configuration of labels with globs
+
+        :param str state: State of PR to be (re)labeled
+
+        :param str base: Base branch of PRs to be (re)labeled
+
+        :param delete_old: If no longer matching labels should be deleted
+
+        :param Optional[Github] github: inilized Github API wrapper
         """
         if github == None:
             self.github = GitHub(token)
@@ -141,14 +213,22 @@ class Filabel:
     def defined_labels(self):
         """
         Set of labels defined in configuration
+
+        :rtype: set[str]
+
+        :return: labels by given configuration
         """
         return set(self.labels.keys())
 
     def _matching_labels(self, pr_filenames):
         """
-        Find matching labels based on given filenames
+        Find matching labels based on given filenames with used configuration label file
 
-        pr_filenames: list of filenames as strings
+        :param list[str] pr_filenames: list of filenames as strings
+
+        :rtype: set[str]
+
+        :return: used labels in PR filenames
         """
         labels = set()
         for filename in pr_filenames:
@@ -163,9 +243,15 @@ class Filabel:
         """
         Compute added, remained, deleted, and future label sets
 
-        defined: Set of defined labels in config
-        matching: Set of matching labels that should be in PR
-        existing: Set of labels that are currently in PR
+        :param list[str] defined: Set of defined labels in config
+
+        :param set[str] matching: Set of matching labels that should be in PR
+
+        :param set[str] existing: Set of labels that are currently in PR
+
+        :rtype: tuple(set[str], set[str], set[str], set[str])
+
+        :return: Tuple of
         """
         added = matching - existing
         remained = matching & existing
@@ -181,9 +267,15 @@ class Filabel:
         """
         Manage labels for single given PR
 
-        owner: Owner of GitHub repository
-        repo: Name of GitHub repository
-        pr_dict: PR as dict from GitHub API
+        :param str owner: Owner of GitHub repository
+
+        :param str repo: Name of GitHub repository
+
+        :param dict pr_dict: PR as dict from GitHub API
+
+        :rtype :
+
+        :return:
         """
         pr_filenames = list(
             self.github.pr_filenames(owner, repo, pr_dict['number'])
@@ -209,7 +301,11 @@ class Filabel:
         """
         Manage labels for all matching PRs in given repo
 
-        reposlug: Reposlug (full name) of GitHub repo (i.e. "owner/name")
+        :param str reposlug: Reposlug (full name) of GitHub repo (i.e. "owner/name")
+
+        :rtype :
+
+        :return:
         """
         report = Report(reposlug)
         owner, repo = reposlug.split('/')

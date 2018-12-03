@@ -9,8 +9,13 @@ def stylize_label_change(change_type, label):
     """
     Stylize change with given type and changed label
 
-    change_type: type of change
-    label: name of changed label
+    :param change_type: type of change
+
+    :param label: name of changed label
+
+    :rtype:
+
+    :return:
     """
     if change_type == Change.ADD:
         return click.style(f'+ {label}', fg='green')
@@ -23,7 +28,7 @@ def print_report(report):
     """
     Print Filabel report to command line
 
-    report: Report to be printed
+    :param report: Report to be printed
     """
     click.secho(f'REPO', nl=False, bold=True)
     click.secho(f' {report.repo} - ', nl=False)
@@ -46,7 +51,7 @@ def get_token(config_auth):
     """
     Extract token from auth config and do the checks
 
-    config_auth: ConfigParser with loaded configuration of auth
+    :param config_auth: ConfigParser with loaded configuration of auth
     """
     if config_auth is None:
         click.secho('Auth configuration not supplied!', err=True)
@@ -64,7 +69,7 @@ def get_labels(config_labels):
     """
     Extract labels from labels config and do the checks
 
-    config_labels: ConfigParser with loaded configuration of labels
+    :param config_labels: ConfigParser with loaded configuration of labels
     """
     if config_labels is None:
         click.secho('Labels configuration not supplied!', err=True)
@@ -82,7 +87,7 @@ def check_reposlugs(reposlugs):
     """
     Check formatting of reposlugs (contains 1 "/")
 
-    reposlugs: List of reposlugs (i.e. "owner/repo")
+    :param list[str] reposlugs: List of reposlugs (i.e. "owner/repo")
     """
     for reposlug in reposlugs:
         if len(reposlug.split('/')) != 2:
@@ -105,7 +110,10 @@ def check_reposlugs(reposlugs):
               help='File with labels configuration.')
 def cli(reposlugs, state, delete_old, base, config_auth, config_labels):
     """
-    CLI tool for filename-pattern-based labeling of GitHub PRs
+    CLI tool for filename-pattern-based labeling of GitHub Pull Requests (PRs).
+
+
+
     """
     token = get_token(config_auth)
     labels = get_labels(config_labels)

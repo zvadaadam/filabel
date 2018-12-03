@@ -23,8 +23,6 @@ Contents
    filabel_doc/usage/index
    filabel_doc/module/module
 
-
-
 Indices and tables
 ==================
 

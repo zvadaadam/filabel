@@ -7,14 +7,14 @@ Github
 .. testsetup::
 
     import os
-    from filabel.logic import GitHub
+    import filabel
 
     try:
         token = os.environ['GH_TOKEN']
     except:
         assert False, 'Set GH_TOKEN environment variable'
 
-    github = GitHub(token)
+    github = filabel.logic.GitHub(token)
 
     user = github.user()
 
@@ -36,17 +36,19 @@ First we need valid Github token in environment variable ``GH_TOKEN``.
 
 .. testcode::
 
-    labels = ['IS', 'IT', 'WORTH', 'IT', '?', 'NOT']
+    labels = ['PYT', ':(']
 
     repo = 'filabel-testrepo2'
 
     labels = github.reset_labels(user['login'], repo, 2, labels)
 
-    print(labels[5]['name'])
+    print(labels[1]['name'])
+    print(labels[0]['name'])
 
 .. testoutput::
 
-    NOT
+    PYT
+    :(
 
 .. testcleanup::
 
@@ -73,16 +75,16 @@ Filabel
     github = GitHub(token)
     username = github.user()['login']
 
-    repo = '/filabel-testrepo4'
+    repo = 'filabel-testrepo4'
 
-    ABS_PATH = os.getcwd()
+    path = os.getcwd()
+
+
 
     config_label = '/fixture/labels.example.cfg'
     config_paser = configparser.ConfigParser()
-    config_paser.read('/Users/adamzvada/Documents/School/MI/MI-PYT/filabel-0-2.3/docs' + config_label)
+    config_paser.read(path + config_label)
     labels = parse_labels(config_paser)
-
-    filabel = Filabel(token=token, labels=labels, state='open', base=None, delete_old=True, github=github)
 
 
 First we need valid Github token in environment variable ``GH_TOKEN`` and path to label config file.
@@ -90,6 +92,8 @@ First we need valid Github token in environment variable ``GH_TOKEN`` and path t
 .. testcode::
 
     from filabel.logic import Filabel
+
+    filabel = Filabel(token=token, labels=labels, state='open', base=None, delete_old=True, github=github)
 
     reposlug = f'{username}/{repo}'
 

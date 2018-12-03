@@ -48,3 +48,17 @@ def test_process_webhook_ping(github):
     assert res == 'PONG'
     assert code == 200
 
+def test_app(github, betamax_session):
+
+    os.environ["FILABEL_CONFIG"] = CONFIGS_PATH + "/labels.abc.cfg" + ':' + CONFIGS_PATH + '/auth.fff.cfg'
+
+    test_app = create_app(github=github)
+
+    #test_app.inject_session(betamax_session)
+    #test_app.reload_config()
+
+    client = test_app.test_client()
+
+    response = client.get('/')
+
+    assert response.status_code == 200
