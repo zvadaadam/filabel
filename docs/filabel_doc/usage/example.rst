@@ -32,7 +32,7 @@ First we need valid Github token in environment variable ``GH_TOKEN``.
 
 .. testoutput::
 
-    user: zvadaadam
+    user: ...
 
 .. testcode::
 

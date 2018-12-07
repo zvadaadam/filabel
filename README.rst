@@ -2,8 +2,7 @@ filabel
 =======
 
 .. image:: https://travis-ci.com/zvadaadam/filabel-tests.svg?token=hQ9pHGbqJt1vNKYxDgN7&branch=master
-:target: https://travis-ci.com/zvadaadam/filabel-tests
-
+    :target: https://travis-ci.com/zvadaadam/filabel-tests
 
 |license| |pypi|
 
@@ -47,6 +46,38 @@ Or run the web service
 
 For more info about configuration files, take a look at the content of
 ``config`` directory.
+
+
+Documantation
+____________
+
+Documanation is created using Sphinx, before you build it you need to install this dependency.
+::
+    pip install -r docs/requirements.txt
+
+To create the documentation, use following command
+::
+    make html
+
+Tests
+_____
+
+Filabel unit test are running using Betamax with pregenerated cassettes on default username ``zvadaadam``.
+
+Starting the unit tests is done by running
+::
+    $ python setup.py test
+
+
+In order to run your own Filabel unit tests, you need generate your own cassettes and create the testing environment structure.
+
+First, you will need to configure environment variables for GitHub authentication:
+* ``GH_USER`` - GitHub username
+* ``GH_TOKEN`` - GitHub access token with privileges to create repository and read the PRs
+
+And the tests are running on explicit repository and pull requests structure so you need to run script which prepares the testing environment.
+::
+    $ ./test_environment/setup.sh
 
 
 License
