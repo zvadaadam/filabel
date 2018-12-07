@@ -48,16 +48,16 @@ For more info about configuration files, take a look at the content of
 ``config`` directory.
 
 
-Documantation
+Documentation
 ____________
 
-Documanation is created using Sphinx, before you build it you need to install this dependency.
+Documentation is created using Sphinx, before you build it you need to install this dependency.
 ::
-    pip install -r docs/requirements.txt
+    $ pip install -r docs/requirements.txt
 
 To create the documentation, use following command
 ::
-    make html
+    $ make html
 
 Tests
 _____
@@ -72,6 +72,7 @@ Starting the unit tests is done by running
 In order to run your own Filabel unit tests, you need generate your own cassettes and create the testing environment structure.
 
 First, you will need to configure environment variables for GitHub authentication:
+
 * ``GH_USER`` - GitHub username
 * ``GH_TOKEN`` - GitHub access token with privileges to create repository and read the PRs
 
