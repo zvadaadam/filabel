@@ -67,3 +67,24 @@ Example::
 
 
 
+How to get Tokens
+------------------
+
+To acuire the GitHub token just follow these few steps:
+
+* Go to GitHub page with `Personal Tokens`_
+* Click Generate new token
+* Add the name of token and check the repo permissions
+* Confirm the generation
+* Copy the token to your `auth.cfg` as token value
+
+The web application requires the webhook token:
+
+* Go to GitHub page with `Developer settings`_
+* Choose OAuth Apps
+* Register your app and fill you app informations
+* Generated token copy to `auth.cfg` as secret value
+
+
+.. _Personal Tokens: https://github.com/settings/tokens
+.. _Developer settings: https://github.com/settings/developers
