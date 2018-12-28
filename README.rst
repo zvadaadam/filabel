@@ -18,11 +18,11 @@ You can install this app in a standard way using ``setup.py``:
     $ python setup.py install
     $ pip install -e .
 
-Or from PyPI:
+Or from Testing PyPI:
 
 ::
 
-    $ pip install filabel_cvut
+    $ pip install -i https://test.pypi.org/simple/ filabel-zvadaada
 
 
 Usage
@@ -49,23 +49,26 @@ For more info about configuration files, take a look at the content of
 
 
 Documentation
-____________
+______________
 
 Documentation is created using Sphinx, before you build it you need to install this dependency.
 ::
+
     $ pip install -r docs/requirements.txt
 
 To create the documentation, use following command
 ::
+
     $ make html
 
 Tests
-_____
+______
 
 Filabel unit test are running using Betamax with pregenerated cassettes on default username ``zvadaadam``.
 
 Starting the unit tests is done by running
 ::
+
     $ python setup.py test
 
 
@@ -78,6 +81,7 @@ First, you will need to configure environment variables for GitHub authenticatio
 
 And the tests are running on explicit repository and pull requests structure so you need to run script which prepares the testing environment.
 ::
+
     $ ./test_environment/setup.sh
 
 
@@ -94,4 +98,4 @@ This project is licensed under the MIT License - see the `LICENSE`_ file for mor
     :target: LICENSE
 .. |pypi| image:: https://badge.fury.io/py/filabel_cvut.svg
     :alt: PyPi Version
-    :target: https://badge.fury.io/py/filabel_cvut
+    :target: https://test.pypi.org/project/filabel-zvadaada/

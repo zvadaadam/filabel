@@ -2,6 +2,10 @@ import enum
 import fnmatch
 import itertools
 import requests
+import aiohttp
+import asyncio
+from urllib import parse
+
 
 
 class GitHub:
@@ -37,7 +41,82 @@ class GitHub:
         req.headers['Authorization'] = 'token ' + self.token
         return req
 
+    def async_session(self):
+
+        return aiohttp.ClientSession(headers={'User-Agent': 'filabel', 'Authorization': f'token {self.token}'})
+
+    async def _paginated_json_get_async(self, url, params=None):
+        """
+        """
+
+        session = self.async_session()
+        async with session:
+            future = asyncio.ensure_future(self._get_reponse(session, url, params))
+
+            json, links = await future
+
+            if links != None:
+                next_num = self.page_num_from_ulr(links[0]['url'])
+                last_num = self.page_num_from_ulr(links[1]['url'])
+
+                reponse_paginated = await asyncio.gather(*[self._get_reponse(session, self.url_with_page_num(links[0]['url'], page_num)) for page_num in range(next_num, last_num + 1)])
+
+                for reponse in reponse_paginated:
+                    json += reponse[0]
+
+            return json
+
+            #reponse_paginated = await asyncio.gather(*[self._get_reponse(session, url) for url in links])
+
+    def url_with_page_num(self, url, num):
+
+        parsed_url = parse.urlparse(url)
+
+        url_dict = parse.parse_qs(parsed_url.query)
+        url_dict['page'] = [num]
+
+        parsed_url = list(parsed_url)
+
+        parsed_url[4] = parse.urlencode(url_dict, doseq=True)
+
+        return parse.urlunparse(parsed_url)
+
+
+
+    def page_num_from_ulr(self, url):
+        """
+
+        :param url:
+        :return:
+        """
+        parsed_url = parse.urlparse(url)
+
+        return int(parse.parse_qs(parsed_url.query)['page'][0])
+
+
+    async def _get_reponse(self, session, url, params=None):
+        """
+
+        :param session:
+        :param url:
+        :param params:
+        :return:
+        """
+
+        async with session.get(url, params=params) as response:
+
+            future_json = await response.json()
+
+            links = None
+            if response.headers.get('Link'):
+                links = requests.utils.parse_header_links(response.headers.get('Link'))
+
+            return future_json, links
+
+
+
     def _paginated_json_get(self, url, params=None):
+
         """"
         If the request response can be paginated, it retrives the whole response.
 
@@ -92,7 +171,16 @@ class GitHub:
             params['base'] = base
         url = f'{self.API}/repos/{owner}/{repo}/pulls'
 
-        return self._paginated_json_get(url, params)
+        #return self._paginated_json_get(url, params)
+
+        loop = asyncio.get_event_loop()
+
+        json = loop.run_until_complete(self._paginated_json_get_async(url, params))
+
+        loop.close()
+
+        return json
+
 
     def pr_files(self, owner, repo, number):
         """
@@ -329,13 +417,14 @@ if __name__ == "__main__":
 
     import os
 
-    token = os.environ.get('GH_TOKEN', '<TOKEN>')
+    os.environ['PYTHONASYNCIODEBUG'] = '1'
+    token = os.environ.get('GH_TOKEN', 'edd303d73b09c5e6914b5c881ee4b6b6bd8ff398')
     print(token)
 
     github = GitHub(token)
 
     owner = 'zvadaadam'
-    repo = 'filabel-testrepo4'
+    repo = 'filabel-testrepo2'
 
     pr = github.pull_requests(owner, repo)
 

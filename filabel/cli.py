@@ -108,6 +108,8 @@ def check_reposlugs(reposlugs):
               help='File with authorization configuration.')
 @click.option('-l', '--config-labels', type=click.File('r'),
               help='File with labels configuration.')
+@click.option('-x', '--async', is_flag=True,
+              help='Using async :)')
 def cli(reposlugs, state, delete_old, base, config_auth, config_labels):
     """
     CLI tool for filename-pattern-based labeling of GitHub Pull Requests (PRs).
