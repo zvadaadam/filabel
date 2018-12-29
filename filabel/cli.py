@@ -110,7 +110,7 @@ def check_reposlugs(reposlugs):
               help='File with labels configuration.')
 @click.option('-x', '--async', is_flag=True,
               help='Using async :)')
-def cli(reposlugs, state, delete_old, base, config_auth, config_labels):
+def cli(reposlugs, state, delete_old, base, config_auth, config_labels, async_run):
     """
     CLI tool for filename-pattern-based labeling of GitHub Pull Requests (PRs).
 
@@ -121,7 +121,18 @@ def cli(reposlugs, state, delete_old, base, config_auth, config_labels):
     labels = get_labels(config_labels)
     check_reposlugs(reposlugs)
 
-    fl = Filabel(token, labels, state, base, delete_old)
-    for repo in reposlugs:
-        report = fl.run_repo(repo)
+    fl = Filabel(token, labels, state, base, delete_old, async_run)
+
+    reports = fl.run_repos(reposlugs)
+
+    for report in reports:
         print_report(report)
+
+    # if fl.async_run:
+    #     fl.async_run_repo(repo)
+    # else:
+    #
+    # # make it async for reposlugs
+    # for repo in reposlugs:
+    #     report = fl.run_repo(repo)
+    #     print_report(report)

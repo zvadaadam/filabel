@@ -5,7 +5,9 @@ import requests
 import aiohttp
 import asyncio
 import abc
+import configparser
 from urllib import parse
+from filabel.utils import parse_labels
 
 
 class PaginationStrategy(metaclass=abc.ABCMeta):
@@ -46,15 +48,19 @@ class AsyncPagination(PaginationStrategy):
 
     def paginated_get(self, url, params=None, headers=None, session=None):
 
-        loop = asyncio.get_event_loop()
+        #loop = asyncio.get_event_loop()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
-        json = loop.run_until_complete(self._paginated_get(url, params))
+        json = loop.run_until_complete(self._paginated_get(url, params=params, headers=headers))
 
         loop.close()
 
         return json
 
     async def _paginated_get(self, url, params=None, headers=None, session=None):
+
+        print('PAGINATED ASYNC')
 
         session = aiohttp.ClientSession(headers=headers)
         async with session:
@@ -66,9 +72,11 @@ class AsyncPagination(PaginationStrategy):
                 next_num = self._page_num_from_ulr(links[0]['url'])
                 last_num = self._page_num_from_ulr(links[1]['url'])
 
-                reponse_paginated = await asyncio.gather(
-                    *[self._get_reponse(session, self._url_with_page_num(links[0]['url'], page_num)) for page_num in
-                      range(next_num, last_num + 1)])
+                futures = [asyncio.ensure_future(
+                    self._get_reponse(session, self._url_with_page_num(links[0]['url'], page_num)))
+                        for page_num in range(next_num, last_num + 1)]
+
+                reponse_paginated = await asyncio.gather(*futures)
 
                 for reponse in reponse_paginated:
                     json += reponse[0]
@@ -77,10 +85,12 @@ class AsyncPagination(PaginationStrategy):
 
     async def _get_reponse(self, session, url, params=None):
 
+        print('async reponse')
+
         async with session.get(url, params=params) as response:
 
             future_json = await response.json()
-
+            print(future_json)
             links = None
             if response.headers.get('Link'):
                 links = requests.utils.parse_header_links(response.headers.get('Link'))
@@ -145,6 +155,10 @@ class GitHub:
         req.headers['Authorization'] = 'token ' + self.token
         return req
 
+    def auth_header(self):
+
+        return {'User-Agent': 'Python' , 'Authorization': f'token {self.token}'}
+
     def user(self):
         """
         Get current Github user authenticated by given token
@@ -156,7 +170,7 @@ class GitHub:
         #return self._paginated_json_get(f'{self.API}/user')
 
         url = f'{self.API}/user'
-        return self.strategy.paginated_get(url, session=self.session)
+        return self.strategy._paginated_get(url, headers=self.auth_header(), session=self.session)
 
     def pull_requests(self, owner, repo, state='open', base=None):
         """
@@ -181,11 +195,32 @@ class GitHub:
             params['base'] = base
         url = f'{self.API}/repos/{owner}/{repo}/pulls'
 
-        return self.strategy.paginated_get(url, params=params, session=self.session)
+        return self.strategy.paginated_get(url, params=params, headers=self.auth_header(), session=self.session)
 
-        #return self._paginated_json_get(url, params)
+    async def async_pull_requests(self, owner, repo, state='open', base=None):
+        """
+        Get all Pull Requests of a defined repositary.
 
+        :param str owner: GtiHub user or org
 
+        :param str repo: repo name
+
+        :param str state: defines the state for retrived PR
+                          Default: open
+                          Set of values: ["open", "closed", "all"]
+
+        :param str base: optional branch the PRs are open for
+
+        :rtype dict: json
+
+        :return: all pull request for given defined repo
+        """
+        params = {'state': state}
+        if base is not None:
+            params['base'] = base
+        url = f'{self.API}/repos/{owner}/{repo}/pulls'
+
+        return await self.strategy._paginated_get(url, params=params, headers=self.auth_header(), session=self.session)
 
     def pr_files(self, owner, repo, number):
         """
@@ -203,9 +238,25 @@ class GitHub:
         """
         url = f'{self.API}/repos/{owner}/{repo}/pulls/{number}/files'
 
-        return self.strategy.paginated_get(url, session=self.session)
+        return self.strategy.paginated_get(url, headers=self.auth_header(), session=self.session)
 
-        #return self._paginated_json_get(url)
+    async def async_pr_files(self, owner, repo, number):
+        """
+        Get files request for one defined Pull Request by ID
+
+        :param str owner: Github username
+
+        :param str repo: name of the repository
+
+        :param int number: ID of the PR
+
+        :rtype dict: json
+
+        :return: changed filenames for one given PR
+        """
+        url = f'{self.API}/repos/{owner}/{repo}/pulls/{number}/files'
+
+        return await self.strategy._paginated_get(url, headers=self.auth_header(), session=self.session)
 
     def pr_filenames(self, owner, repo, number):
         """
@@ -222,6 +273,22 @@ class GitHub:
         :return: changed filenames for one given PR
         """
         return (f['filename'] for f in self.pr_files(owner, repo, number))
+
+    async def async_pr_filenames(self, owner, repo, number):
+        """
+        Get just the filename for one Pull Request, a generator.
+
+        :param str owner: Github username
+
+        :param str repo: name of the repository
+
+        :param int number: ID of the PR
+
+        :rtype dict: json
+
+        :return: changed filenames for one given PR
+        """
+        return (f['filename'] for f in await self.async_pr_files(owner, repo, number))
 
     def reset_labels(self, owner, repo, number, labels):
         """
@@ -276,7 +343,7 @@ class Filabel:
 
     We provide a configuration which files should be labeled and Filabel tool do the rest.
     """
-    def __init__(self, token, labels, state='open', base=None, delete_old=True, github=None):
+    def __init__(self, token, labels, state='open', base=None, delete_old=True, async_run=False, github=None):
         """
         Initilizer for Filabel class.
 
@@ -301,6 +368,7 @@ class Filabel:
         self.state = state
         self.base = base
         self.delete_old = delete_old
+        self.async_run = async_run
 
     @property
     def defined_labels(self):
@@ -390,6 +458,41 @@ class Filabel:
             [(d, Change.DELETE) for d in deleted]
         )) if future == new_label_names else None
 
+    async def async_run_pr(self, owner, repo, pr_dict):
+        """
+        Manage labels for single given PR
+
+        :param str owner: Owner of GitHub repository
+
+        :param str repo: Name of GitHub repository
+
+        :param dict pr_dict: PR as dict from GitHub API
+
+        :rtype :
+
+        :return:
+        """
+        num = pr_dict['number']
+        print(f'RUN PR:{num}')
+
+        pr_filenames = list(await self.github.async_pr_filenames(owner, repo, pr_dict['number']))
+
+        added, remained, deleted, future = self._compute_labels(
+            self.defined_labels,
+            self._matching_labels(pr_filenames),
+            set(l['name'] for l in pr_dict['labels'])
+        )
+
+        new_labels = self.github.reset_labels(owner, repo, pr_dict['number'], list(future))
+
+        new_label_names = set(l['name'] for l in new_labels)
+
+        return sorted(itertools.chain(
+            [(a, Change.ADD) for a in added],
+            [(r, Change.NONE) for r in remained],
+            [(d, Change.DELETE) for d in deleted]
+        )) if future == new_label_names else None
+
     def run_repo(self, reposlug):
         """
         Manage labels for all matching PRs in given repo
@@ -408,14 +511,80 @@ class Filabel:
             report.ok = False
             return report
 
+        # make async for prs
         for pr_dict in prs:
             url = pr_dict.get('html_url', 'unknown')
             report.prs[url] = None
             try:
                 report.prs[url] = self.run_pr(owner, repo, pr_dict)
+                print(report.prs[url])
             except Exception:
                 pass
+
         return report
+
+
+    async def _run_repo(self, reposlug):
+        """
+        Manage labels for all matching PRs in given repo
+
+        :param str reposlug: Reposlug (full name) of GitHub repo (i.e. "owner/name")
+
+        :rtype :
+
+        :return:
+        """
+        report = Report(reposlug)
+        owner, repo = reposlug.split('/')
+        try:
+
+            prs = await self.github.async_pull_requests(owner, repo, self.state, self.base)
+
+        except Exception as e:
+            print(e)
+            report.ok = False
+            return report
+
+        # make async for prs
+        responses = await asyncio.gather(*[self.async_run_pr(owner, repo, pr_dict) for pr_dict in prs])
+
+        for response, pr_dict in zip(responses, prs):
+            url = pr_dict.get('html_url', 'unknown')
+            report.prs[url] = response
+
+        return report
+
+    def run_repos(self, reposlugs):
+
+        if self.async_run:
+            reports = self.async_run_repos(reposlugs)
+        else:
+            reports = self.sync_run_repos(reposlugs)
+
+        return reports
+
+    def async_run_repos(self, reposlugs):
+
+        async def process_repo():
+            return await asyncio.gather(*[filabel._run_repo(reposlug=reposlug) for reposlug in reposlugs])
+
+        loop = asyncio.get_event_loop()
+
+        reports = loop.run_until_complete(process_repo())
+
+        loop.close()
+
+        return reports
+
+
+    def sync_run_repos(self, reposlugs):
+
+        reports = []
+        for reposlug in reposlugs:
+            reports.append(self.run_repo(reposlug))
+
+        return reports
+
 
 
 if __name__ == "__main__":
@@ -423,7 +592,7 @@ if __name__ == "__main__":
     import os
 
     os.environ['PYTHONASYNCIODEBUG'] = '1'
-    token = os.environ.get('GH_TOKEN', 'edd303d73b09c5e6914b5c881ee4b6b6bd8ff398')
+    token = os.environ.get('GH_TOKEN', '5de9bc5acb78c45e6e80c52a683400be1b3c2932')
     print(token)
 
     github = GitHub(token, strategy=AsyncPagination())
@@ -432,7 +601,27 @@ if __name__ == "__main__":
     owner = 'zvadaadam'
     repo = 'filabel-testrepo2'
 
-    pr = github.pull_requests(owner, repo)
 
-    print(pr)
+    #prs = github.pull_requests(owner, repo)
+    #print(prs)
+
+    #pr = github.pr_files(owner, repo, 1)
+    #print(pr)
+
+
+    CONFIGS_PATH = '/Users/adamzvada/Documents/School/MI/MI-PYT/filabel-0-2.3/config/labels.test.cfg'
+    config_paser = configparser.ConfigParser()
+    config_paser.read(CONFIGS_PATH)
+    labels = parse_labels(config_paser)
+    filabel = Filabel(token=token, labels=labels, state='open', base=None, delete_old=True, github=github)
+    reposlugs = [f'{owner}/{repo}', f'{owner}/{repo}', f'{owner}/{repo}']
+
+    reponse = filabel.async_run_repo(reposlugs)
+    print(reponse)
+
+
+
+
+
+
 
