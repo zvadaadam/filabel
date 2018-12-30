@@ -60,7 +60,7 @@ class AsyncPagination(PaginationStrategy):
 
     async def _paginated_get(self, url, params=None, headers=None, session=None):
 
-        print('PAGINATED ASYNC')
+        #print('PAGINATED ASYNC')
 
         session = aiohttp.ClientSession(headers=headers)
         async with session:
@@ -85,12 +85,11 @@ class AsyncPagination(PaginationStrategy):
 
     async def _get_reponse(self, session, url, params=None):
 
-        print('async reponse')
+        #print('async reponse')
 
         async with session.get(url, params=params) as response:
 
             future_json = await response.json()
-            print(future_json)
             links = None
             if response.headers.get('Link'):
                 links = requests.utils.parse_header_links(response.headers.get('Link'))
@@ -359,10 +358,11 @@ class Filabel:
 
         :param Optional[Github] github: inilized Github API wrapper
         """
-        if github == None:
-            self.github = GitHub(token)
+
+        if async_run:
+            self.github = github or GitHub(token, strategy=AsyncPagination())
         else:
-            self.github = github
+            self.github = github or GitHub(token, strategy=SyncPagination())
 
         self.labels = labels
         self.state = state
@@ -472,8 +472,6 @@ class Filabel:
 
         :return:
         """
-        num = pr_dict['number']
-        print(f'RUN PR:{num}')
 
         pr_filenames = list(await self.github.async_pr_filenames(owner, repo, pr_dict['number']))
 
@@ -517,7 +515,6 @@ class Filabel:
             report.prs[url] = None
             try:
                 report.prs[url] = self.run_pr(owner, repo, pr_dict)
-                print(report.prs[url])
             except Exception:
                 pass
 
@@ -541,7 +538,6 @@ class Filabel:
             prs = await self.github.async_pull_requests(owner, repo, self.state, self.base)
 
         except Exception as e:
-            print(e)
             report.ok = False
             return report
 
@@ -565,12 +561,9 @@ class Filabel:
 
     def async_run_repos(self, reposlugs):
 
-        async def process_repo():
-            return await asyncio.gather(*[filabel._run_repo(reposlug=reposlug) for reposlug in reposlugs])
-
         loop = asyncio.get_event_loop()
 
-        reports = loop.run_until_complete(process_repo())
+        reports = loop.run_until_complete(asyncio.gather(*[self._run_repo(reposlug=reposlug) for reposlug in reposlugs]))
 
         loop.close()
 
@@ -590,6 +583,7 @@ class Filabel:
 if __name__ == "__main__":
 
     import os
+    import datetime
 
     os.environ['PYTHONASYNCIODEBUG'] = '1'
     token = os.environ.get('GH_TOKEN', '5de9bc5acb78c45e6e80c52a683400be1b3c2932')
@@ -613,11 +607,14 @@ if __name__ == "__main__":
     config_paser = configparser.ConfigParser()
     config_paser.read(CONFIGS_PATH)
     labels = parse_labels(config_paser)
-    filabel = Filabel(token=token, labels=labels, state='open', base=None, delete_old=True, github=github)
-    reposlugs = [f'{owner}/{repo}', f'{owner}/{repo}', f'{owner}/{repo}']
+    filabel = Filabel(token=token, labels=labels, state='open', base=None, delete_old=True, github=github, async_run=True)
+    reposlugs = [f'{owner}/{repo}']
 
-    reponse = filabel.async_run_repo(reposlugs)
+    now = datetime.datetime.now()
+    reponse = filabel.run_repos(reposlugs)
+    after = datetime.datetime.now()
     print(reponse)
+    print(after - now)
 
 
 

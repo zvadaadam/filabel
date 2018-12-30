@@ -97,19 +97,12 @@ def check_reposlugs(reposlugs):
 
 @click.command('filabel')
 @click.argument('reposlugs', nargs=-1)
-@click.option('-s', '--state', type=click.Choice(['open', 'closed', 'all']),
-              default='open', show_default=True, help='Filter pulls by state.')
-@click.option('-d/-D', '--delete-old/--no-delete-old', default=True,
-              show_default=True,
-              help='Delete labels that do not match anymore.')
-@click.option('-b', '--base', type=str, metavar='BRANCH',
-              help='Filter pulls by base (PR target) branch name.')
-@click.option('-a', '--config-auth', type=click.File('r'),
-              help='File with authorization configuration.')
-@click.option('-l', '--config-labels', type=click.File('r'),
-              help='File with labels configuration.')
-@click.option('-x', '--async', is_flag=True,
-              help='Using async :)')
+@click.option('-s', '--state', type=click.Choice(['open', 'closed', 'all']), default='open', show_default=True, help='Filter pulls by state.')
+@click.option('-d/-D', '--delete-old/--no-delete-old', default=True, show_default=True, help='Delete labels that do not match anymore.')
+@click.option('-b', '--base', type=str, metavar='BRANCH', help='Filter pulls by base (PR target) branch name.')
+@click.option('-a', '--config-auth', type=click.File('r'), help='File with authorization configuration.')
+@click.option('-l', '--config-labels', type=click.File('r'), help='File with labels configuration.')
+@click.option('-x', '--async', name='async_run', is_flag=True, help='Using async :)')
 def cli(reposlugs, state, delete_old, base, config_auth, config_labels, async_run):
     """
     CLI tool for filename-pattern-based labeling of GitHub Pull Requests (PRs).
@@ -136,3 +129,14 @@ def cli(reposlugs, state, delete_old, base, config_auth, config_labels, async_ru
     # for repo in reposlugs:
     #     report = fl.run_repo(repo)
     #     print_report(report)
+
+
+if __name__ == '__main__':
+
+
+    reposlug = ''
+    state = ''
+    delete_old = ''
+
+    cli()
+
