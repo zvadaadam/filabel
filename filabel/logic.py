@@ -127,7 +127,7 @@ class GitHub:
     """
     API = 'https://api.github.com'
 
-    def __init__(self, token, strategy=None, session=None):
+    def __init__(self, token, strategy=SyncPagination(), session=None):
         """
         Initilizer for GitHub API wrapper.
 
@@ -169,7 +169,7 @@ class GitHub:
         #return self._paginated_json_get(f'{self.API}/user')
 
         url = f'{self.API}/user'
-        return self.strategy._paginated_get(url, headers=self.auth_header(), session=self.session)
+        return self.strategy.paginated_get(url, headers=self.auth_header(), session=self.session)
 
     def pull_requests(self, owner, repo, state='open', base=None):
         """

@@ -3,10 +3,9 @@ import betamax
 import pytest
 import configparser
 
-#from betamax_serializers import pretty_json
-
 from filabel.logic import GitHub
 from filabel.logic import Filabel
+from filabel.logic import SyncPagination
 from filabel.web import create_app
 from click.testing import CliRunner
 
@@ -21,9 +20,7 @@ USER_DEFAULT = 'zvadaadam'
 
 
 with betamax.Betamax.configure() as config:
-
     config.cassette_library_dir = CASSETTES_PATH
-    #config.default_cassette_options['serialize_with'] = 'prettyjson'
     config.default_cassette_options['match_requests_on'] = [
         'method',
         'uri',
@@ -48,7 +45,7 @@ def github(betamax_session):
 
     #token = os.environ.get('GH_TOKEN', '<TOKEN>')
 
-    github = GitHub(token, betamax_session)
+    github = GitHub(token, strategy=SyncPagination(), session=betamax_session)
 
     return github
 
@@ -59,7 +56,7 @@ def filabel(betamax_session, request):
     default_config = '/labels.abc.cfg'
     token = os.environ.get('GH_TOKEN', '<TOKEN>')
 
-    github = GitHub(token, betamax_session)
+    github = GitHub(token, strategy=SyncPagination(), session=betamax_session)
 
     config_paser = configparser.ConfigParser()
     config_paser.read(CONFIGS_PATH + default_config)
@@ -74,7 +71,7 @@ def filabel_param(betamax_session, request):
 
     token = os.environ.get('GH_TOKEN', '<TOKEN>')
 
-    github = GitHub(token, betamax_session)
+    github = GitHub(token, strategy=SyncPagination(), session=betamax_session)
 
     config_paser = configparser.ConfigParser()
     config_paser.read(CONFIGS_PATH + request.param)

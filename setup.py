@@ -6,7 +6,7 @@ with open('README.rst') as f:
 
 setup(
     name='filabel-zvadaada',
-    version='0.5.1',
+    version='0.6',
     keywords='github labels management pull-requests globs',
     description='Simple CLI & WEB tool for labeling GitHub PRs using globs',
     long_description=long_description,
