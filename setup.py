@@ -32,6 +32,7 @@ setup(
         'Flask',
         'jinja2',
         'requests',
+        'aiohttp'
     ],
     setup_requires=[
         'pytest-runner'

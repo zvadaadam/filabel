@@ -24,6 +24,28 @@ def stylize_label_change(change_type, label):
     return f'= {label}'
 
 
+def print_report_async(report):
+    """
+    Print Filabel report to command line
+
+    :param report: Report to be printed
+    """
+    click.secho(f'REPO', nl=False, bold=True)
+    click.secho(f' {report.repo} - ', nl=False)
+    if report.ok:
+        click.secho('OK', fg='green', bold=True)
+        for pr_link, result in report.prs.items():
+            click.secho(f'PR', nl=False, bold=True)
+            click.secho(f' {pr_link} - ', nl=False)
+            if result is None:
+                click.secho('FAIL', fg='red', bold=True)
+            else:
+                click.secho('OK', fg='green', bold=True)
+                for label, t in result:
+                    click.echo(f'  {stylize_label_change(t, label)}')
+    else:
+        click.secho('FAIL', fg='red', bold=True)
+
 def print_report(report):
     """
     Print Filabel report to command line
@@ -83,26 +105,14 @@ def get_labels(config_labels):
         exit(1)
 
 
-def check_reposlugs(reposlugs):
-    """
-    Check formatting of reposlugs (contains 1 "/")
-
-    :param list[str] reposlugs: List of reposlugs (i.e. "owner/repo")
-    """
-    for reposlug in reposlugs:
-        if len(reposlug.split('/')) != 2:
-            click.secho(f'Reposlug {reposlug} not valid!', err=True)
-            exit(1)
-
-
 @click.command('filabel')
-@click.argument('reposlugs', nargs=-1)
 @click.option('-s', '--state', type=click.Choice(['open', 'closed', 'all']), default='open', show_default=True, help='Filter pulls by state.')
 @click.option('-d/-D', '--delete-old/--no-delete-old', default=True, show_default=True, help='Delete labels that do not match anymore.')
 @click.option('-b', '--base', type=str, metavar='BRANCH', help='Filter pulls by base (PR target) branch name.')
 @click.option('-a', '--config-auth', type=click.File('r'), help='File with authorization configuration.')
 @click.option('-l', '--config-labels', type=click.File('r'), help='File with labels configuration.')
-@click.option('-x', '--async', name='async_run', is_flag=True, help='Using async :)')
+@click.option('-x', '--async', 'async_run',is_flag=True, help='Using asyncio.')
+@click.argument('reposlugs', nargs=-1)
 def cli(reposlugs, state, delete_old, base, config_auth, config_labels, async_run):
     """
     CLI tool for filename-pattern-based labeling of GitHub Pull Requests (PRs).
@@ -119,8 +129,11 @@ def cli(reposlugs, state, delete_old, base, config_auth, config_labels, async_ru
     reports = fl.run_repos(reposlugs)
 
     for report in reports:
-        print_report(report)
-
+        if async_run:
+            print_report_async(report)
+        else:
+            print_report(report)
+            
     # if fl.async_run:
     #     fl.async_run_repo(repo)
     # else:
@@ -131,12 +144,13 @@ def cli(reposlugs, state, delete_old, base, config_auth, config_labels, async_ru
     #     print_report(report)
 
 
-if __name__ == '__main__':
+def check_reposlugs(reposlugs):
+    """
+    Check formatting of reposlugs (contains 1 "/")
 
-
-    reposlug = ''
-    state = ''
-    delete_old = ''
-
-    cli()
-
+    :param list[str] reposlugs: List of reposlugs (i.e. "owner/repo")
+    """
+    for reposlug in reposlugs:
+        if len(reposlug.split('/')) != 2:
+            click.secho(f'Reposlug {reposlug} not valid!', err=True)
+            exit(1)

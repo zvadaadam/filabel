@@ -62,7 +62,7 @@ class AsyncPagination(PaginationStrategy):
 
         #print('PAGINATED ASYNC')
 
-        session = aiohttp.ClientSession(headers=headers)
+        session = aiohttp.ClientSession(headers=headers, raise_for_status=True)
         async with session:
             future = asyncio.ensure_future(self._get_reponse(session, url, params))
 
@@ -434,7 +434,7 @@ class Filabel:
 
         :param dict pr_dict: PR as dict from GitHub API
 
-        :rtype :
+        :rtypeprint :
 
         :return:
         """
@@ -534,19 +534,22 @@ class Filabel:
         report = Report(reposlug)
         owner, repo = reposlug.split('/')
         try:
-
             prs = await self.github.async_pull_requests(owner, repo, self.state, self.base)
-
         except Exception as e:
             report.ok = False
             return report
 
         # make async for prs
-        responses = await asyncio.gather(*[self.async_run_pr(owner, repo, pr_dict) for pr_dict in prs])
+        prs_report = await asyncio.gather(*[self.async_run_pr(owner, repo, pr_dict) for pr_dict in prs], return_exceptions=True)
 
-        for response, pr_dict in zip(responses, prs):
+
+        for pr_report, pr_dict in zip(prs_report, prs):
             url = pr_dict.get('html_url', 'unknown')
-            report.prs[url] = response
+            if not isinstance(pr_report, requests.HTTPError):
+                report.prs[url] = pr_report
+            else:
+                report.prs[url] = None
+
 
         return report
 
@@ -593,28 +596,32 @@ if __name__ == "__main__":
     #github = GitHub(token)
 
     owner = 'zvadaadam'
-    repo = 'filabel-testrepo2'
+    repo = 'filabel-testrepo1'
 
 
-    #prs = github.pull_requests(owner, repo)
-    #print(prs)
-
-    #pr = github.pr_files(owner, repo, 1)
-    #print(pr)
-
-
-    CONFIGS_PATH = '/Users/adamzvada/Documents/School/MI/MI-PYT/filabel-0-2.3/config/labels.test.cfg'
+    #CONFIGS_PATH = '/Users/adamzvada/D#ocuments/School/MI/MI-PYT/filabel-0-2.3/config/labels.test.cfg'
+    CONFIGS_PATH = '/Users/adamzvada/Documents/School/MI/MI-PYT/filabel-0-2.3/tests/test/fixtures/labels.empty.cfg'
     config_paser = configparser.ConfigParser()
     config_paser.read(CONFIGS_PATH)
     labels = parse_labels(config_paser)
     filabel = Filabel(token=token, labels=labels, state='open', base=None, delete_old=True, github=github, async_run=True)
-    reposlugs = [f'{owner}/{repo}']
+    #reposlugs = [f'{owner}/{repo}', f'{owner}/filabel-testrepo3']
+    #reposlugs = ['hroncok/non-exsiting-repo', 'MarekSuchanek/non-exsiting-repo']
+    reposlugs = ['hroncok/filabel-testrepo-everybody']
+
+    from filabel.cli import print_report_async
 
     now = datetime.datetime.now()
-    reponse = filabel.run_repos(reposlugs)
+    reports = filabel.run_repos(reposlugs)
     after = datetime.datetime.now()
-    print(reponse)
     print(after - now)
+
+
+    print(reports)
+
+    for report in reports:
+        print_report_async(report)
+
 
 
 
