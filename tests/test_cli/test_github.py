@@ -9,8 +9,9 @@ REPO = 'filabel-testrepo2'
 
 @pytest.mark.parametrize(
     ['repo', 'pr_length'],
-    [('filabel-testrepo1', 0),
-     ('filabel-testrepo2', 53),
+    [('filabel-testrepo1', 2),
+     ('filabel-testrepo2', 111),
+     ('filabel-testrepo3', 0),
      ('filabel-testrepo4', 2)],
 )
 def test_all_pr(username, repo, pr_length, github):

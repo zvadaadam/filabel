@@ -8,13 +8,14 @@ Github
 
     import os
     import filabel
+    from filabel.logic import SyncPagination
 
     try:
         token = os.environ['GH_TOKEN']
     except:
         assert False, 'Set GH_TOKEN environment variable'
 
-    github = filabel.logic.GitHub(token)
+    github = filabel.logic.GitHub(token, strategy=SyncPagination())
 
     user = github.user()
 
@@ -23,8 +24,9 @@ First we need valid Github token in environment variable ``GH_TOKEN``.
 .. testcode::
 
     from filabel.logic import GitHub
+    from filabel.logic import SyncPagination
 
-    github = GitHub(token)
+    github = GitHub(token, strategy=SyncPagination())
 
     user = github.user()
 
@@ -66,13 +68,14 @@ Filabel
     from filabel.logic import GitHub
     from filabel.logic import Filabel
     from filabel.utils import parse_labels
+    from filabel.logic import SyncPagination
 
     try:
         token = os.environ['GH_TOKEN']
     except:
         assert False, 'Set GH_TOKEN environment variable'
 
-    github = GitHub(token)
+    github = GitHub(token, strategy=SyncPagination())
     username = github.user()['login']
 
     repo = 'filabel-testrepo4'
