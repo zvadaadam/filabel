@@ -85,6 +85,12 @@ And the tests are running on explicit repository and pull requests structure so 
     $ ./test_environment/setup.sh
 
 
+Async
+______
+
+Filabel now supports asynchronous requests execution using _aiohttp, which is triggered by adding argument flag ``-x/--async``.
+
+
 License
 -------
 
@@ -99,3 +105,4 @@ This project is licensed under the MIT License - see the `LICENSE`_ file for mor
 .. |pypi| image:: https://badge.fury.io/py/filabel_cvut.svg
     :alt: PyPi Version
     :target: https://test.pypi.org/project/filabel-zvadaada/
+.. _aiohttp: https://github.com/aio-libs/aiohttp

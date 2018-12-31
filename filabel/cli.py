@@ -26,7 +26,7 @@ def stylize_label_change(change_type, label):
 
 def print_report_async(report):
     """
-    Print Filabel report to command line
+    Print Filabel report to command line in async mode
 
     :param report: Report to be printed
     """
@@ -133,7 +133,7 @@ def cli(reposlugs, state, delete_old, base, config_auth, config_labels, async_ru
             print_report_async(report)
         else:
             print_report(report)
-            
+
     # if fl.async_run:
     #     fl.async_run_repo(repo)
     # else:

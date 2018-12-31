@@ -13,7 +13,13 @@ Example::
 
 This command will run Filabel with your defined configuration file ``auth.cfg`` and label structure ``label.cfg`` on repository ``MI-PYT/consumes-a-lot-of-time``.
 
-For advanced documentation for command line parameters, check documentation ....
+CLI also supports asynchronous requests execution (-x/--async).
+Example::
+
+    $ python filabel -a auth.cfg -l label.cfg MI-PYT/consumes-a-lot-of-time --async
+
+
+For advanced documentation for command line parameters, check documentation and filabel's help.
 
 Web application
 ---------------

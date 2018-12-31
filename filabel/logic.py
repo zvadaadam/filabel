@@ -11,9 +11,19 @@ from filabel.utils import parse_labels
 
 
 class PaginationStrategy(metaclass=abc.ABCMeta):
-
+    """
+    Pagination abstract method for different execution modes (sync/async)
+    """
     @abc.abstractmethod
     def paginated_get(self, url, params=None, headers=None, session=None):
+        """
+        Abstract method for paginated get requests
+
+        :param str url: get url
+        :param Optinal[dict[str, str] params: request parameters
+        :param Optinal[dict[str, str] headers: request headers
+        :param session: session for request
+        """
         pass
 
 
@@ -45,9 +55,19 @@ class SyncPagination(PaginationStrategy):
 
 
 class AsyncPagination(PaginationStrategy):
-
+    """
+    Paginated startegy for async excecution.
+    """
     def paginated_get(self, url, params=None, headers=None, session=None):
+        """
+        Implementation of Abstract method for paginated get requests
 
+        :param str url: get url
+        :param Optinal[dict[str, str] params: request parameters
+        :param Optinal[dict[str, str] headers: request headers
+        :param session: session for request
+        :return: json request response
+        """
         #loop = asyncio.get_event_loop()
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -59,8 +79,15 @@ class AsyncPagination(PaginationStrategy):
         return json
 
     async def _paginated_get(self, url, params=None, headers=None, session=None):
+        """
+        Implementation of Abstract method for paginated get requests without event loop!
 
-        #print('PAGINATED ASYNC')
+        :param str url: get url
+        :param Optinal[dict[str, str] params: request parameters
+        :param Optinal[dict[str, str] headers: request headers
+        :param session: session for request
+        :return: corutine of json request response
+        """
 
         session = aiohttp.ClientSession(headers=headers, raise_for_status=True)
         async with session:
@@ -84,8 +111,14 @@ class AsyncPagination(PaginationStrategy):
             return json
 
     async def _get_reponse(self, session, url, params=None):
+        """
+        Specified get reponse for pagination
 
-        #print('async reponse')
+        :param session: session for request
+        :param url: session for request
+        :param Optinal[dict[str, str] params: request parameters
+        :return: tuple of corutine utine json and corutine links
+        """
 
         async with session.get(url, params=params) as response:
 
@@ -170,6 +203,7 @@ class GitHub:
 
         url = f'{self.API}/user'
         return self.strategy.paginated_get(url, headers=self.auth_header(), session=self.session)
+
 
     def pull_requests(self, owner, repo, state='open', base=None):
         """
@@ -554,6 +588,11 @@ class Filabel:
         return report
 
     def run_repos(self, reposlugs):
+        """
+
+        :param reposlugs:
+        :return:
+        """
 
         if self.async_run:
             reports = self.async_run_repos(reposlugs)
@@ -563,6 +602,11 @@ class Filabel:
         return reports
 
     def async_run_repos(self, reposlugs):
+        """
+
+        :param reposlugs:
+        :return:
+        """
 
         loop = asyncio.get_event_loop()
 
@@ -574,7 +618,11 @@ class Filabel:
 
 
     def sync_run_repos(self, reposlugs):
-
+        """
+        
+        :param reposlugs:
+        :return:
+        """
         reports = []
         for reposlug in reposlugs:
             reports.append(self.run_repo(reposlug))
