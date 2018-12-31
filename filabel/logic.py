@@ -28,7 +28,9 @@ class PaginationStrategy(metaclass=abc.ABCMeta):
 
 
 class SyncPagination(PaginationStrategy):
-
+    """
+        Paginated startegy for sync excecution.
+    """
     def paginated_get(self, url, params=None, headers=None, session=None):
         """"
         If the request response can be paginated, it retrives the whole response.
@@ -468,7 +470,6 @@ class Filabel:
 
         :param dict pr_dict: PR as dict from GitHub API
 
-        :rtypeprint :
 
         :return:
         """
@@ -531,9 +532,9 @@ class Filabel:
 
         :param str reposlug: Reposlug (full name) of GitHub repo (i.e. "owner/name")
 
-        :rtype :
+        :rtype Report:
 
-        :return:
+        :return: report
         """
         report = Report(reposlug)
         owner, repo = reposlug.split('/')
@@ -557,13 +558,13 @@ class Filabel:
 
     async def _run_repo(self, reposlug):
         """
-        Manage labels for all matching PRs in given repo
+        Manage labels for all matching PRs in given repo using async execution.
 
         :param str reposlug: Reposlug (full name) of GitHub repo (i.e. "owner/name")
 
-        :rtype :
+        :rtype Corutine(Report):
 
-        :return:
+        :return: corutine report
         """
         report = Report(reposlug)
         owner, repo = reposlug.split('/')
@@ -589,9 +590,10 @@ class Filabel:
 
     def run_repos(self, reposlugs):
         """
+        The main entry function for Filabel labler, it dicides if to run async or sync version.
 
-        :param reposlugs:
-        :return:
+        :param reposlugs: [{user}/{repo}]
+        :return: reports
         """
 
         if self.async_run:
@@ -603,9 +605,11 @@ class Filabel:
 
     def async_run_repos(self, reposlugs):
         """
+        Main function for running asynchornous Filabel.
+        It initilizes the event loop.
 
-        :param reposlugs:
-        :return:
+        :param [str] reposlugs: array of reposlugs, [{user}/{repo}]
+        :return: reports
         """
 
         loop = asyncio.get_event_loop()
@@ -619,9 +623,10 @@ class Filabel:
 
     def sync_run_repos(self, reposlugs):
         """
-        
-        :param reposlugs:
-        :return:
+        Main function for running synchornous Filabel.
+
+        :param [str] reposlugs: array of reposlugs, [{user}/{repo}]
+        :return: reports
         """
         reports = []
         for reposlug in reposlugs:
@@ -637,6 +642,8 @@ if __name__ == "__main__":
     import datetime
 
     os.environ['PYTHONASYNCIODEBUG'] = '1'
+
+    # no need to be worry, it's revoked.
     token = os.environ.get('GH_TOKEN', '5de9bc5acb78c45e6e80c52a683400be1b3c2932')
     print(token)
 
@@ -663,7 +670,6 @@ if __name__ == "__main__":
     reports = filabel.run_repos(reposlugs)
     after = datetime.datetime.now()
     print(after - now)
-
 
     print(reports)
 
